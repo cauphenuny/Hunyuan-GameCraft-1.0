@@ -8,6 +8,10 @@ import random
 import torchvision.transforms as transforms
 from PIL import Image
 import cv2
+try:
+    from torch_npu.contrib import transfer_to_npu
+except ImportError:
+    pass
 
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader
