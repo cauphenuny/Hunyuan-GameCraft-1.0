@@ -6,7 +6,7 @@ import torch
 import tqdm
 import triton
 import triton.language as tl
-
+from loguru import logger
 
 
 def cleanup_memory():
@@ -14,12 +14,13 @@ def cleanup_memory():
     torch.cuda.empty_cache()
 
 
-def per_tensor_quantize(tensor: torch.Tensor) -> Tuple[torch.Tensor, float]:
+def per_tensor_quantize(tensor: torch.Tensor, quant_dtype=torch.float8_e4m3fn) -> Tuple[torch.Tensor, float]:
     """Quantize a tensor using per-tensor static scaling factor.
     Args:
         tensor: The input tensor.
     """
-    finfo = torch.finfo(torch.float8_e4m3fn)
+    finfo = torch.finfo(quant_dtype)
+    # logger.info(f"Quantizing tensor of shape {tensor.shape} from {tensor.dtype} to {quant_dtype}")
     # Calculate the scale as dtype max divided by absmax.
     # Since .abs() creates a new tensor, we use aminmax to get
     # the min and max first and then calculate the absmax.
@@ -39,7 +40,7 @@ def per_tensor_quantize(tensor: torch.Tensor) -> Tuple[torch.Tensor, float]:
     qweight = (tensor * scale).clamp(min=finfo.min, max=finfo.max)
     # Return both float8 data and the inverse scale (as float),
     # as both required as inputs to torch._scaled_mm
-    qweight = qweight.to(torch.float8_e4m3fn)
+    qweight = qweight.to(quant_dtype)
     scale = scale.float().reciprocal()
     return qweight, scale
 
@@ -171,7 +172,8 @@ class FP8DynamicLinear(torch.nn.Module):
         weight_scale: torch.Tensor,
         bias: torch.nn.Parameter,
         native_fp8_support: bool = False,
-        name: str = ""
+        name: str = "",
+        dtype: torch.dtype = torch.float8_e4m3fn,
     ):
         super().__init__()
         self.weight = torch.nn.Parameter(weight, requires_grad=False)
@@ -179,13 +181,14 @@ class FP8DynamicLinear(torch.nn.Module):
         self.bias = bias
         self.native_fp8_support = native_fp8_support
         self.name = name
+        self.dtype = dtype
     # @torch.compile
     def forward(self, x):
         if x.dtype != torch.float16 and x.dtype != torch.bfloat16:
             # print(f"Warning: {self.name}'s input is not quantized to float16 or bfloat16")
             # print(f"input dtype: {x.dtype}")
             x = x.to(torch.bfloat16)
-        qinput, x_scale = per_tensor_quantize(x)
+        qinput, x_scale = per_tensor_quantize(x, quant_dtype=self.dtype)
         # print("--------------")
         # print("layer_name:", self.name)
         # print("A_input.shape:", qinput.shape)
@@ -230,14 +233,15 @@ def convert_fp8_linear(model: torch.nn.Module):
         if "block" not in name:
             print(f"Warning: {name} is not in a block module, skipping")
             continue
-        quant_weight, weight_scale = per_tensor_quantize(linear.weight)
+        quant_weight, weight_scale = per_tensor_quantize(linear.weight, quant_dtype=torch.bfloat16)
         bias = copy.deepcopy(linear.bias) if linear.bias is not None else None
         quant_linear = FP8DynamicLinear(
             weight=quant_weight, 
             weight_scale=weight_scale, 
             bias=bias, 
             native_fp8_support=native_fp8_support, 
-            name = name
+            name=name,
+            dtype=torch.bfloat16,
         )
         replace_module(model, name, quant_linear)
         del linear.weight
