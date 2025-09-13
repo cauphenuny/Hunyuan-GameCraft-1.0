@@ -1,3 +1,4 @@
+import inspect
 import os
 import math
 from typing import Dict, Optional, Tuple, Union
@@ -8,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.distributed
 from loguru import logger
-from hymm_sp.modules.debug_utils import inspect_tensor
+from hymm_sp.modules.debug_utils import inspect_list, inspect_tensor
 
 from torch import distributed as dist
 
@@ -521,10 +522,14 @@ time_compression_ratio: {self.time_compression_ratio},
             row = []
             for j in range(0, x.shape[-1], overlap_size):
                 tile = x[:, :, :, i : i + self.tile_sample_min_size, j : j + self.tile_sample_min_size]
+                inspect_tensor(tile, f"VAE encode input tile ({i}, {j})")
                 tile = self.encoder(tile)
+                inspect_tensor(tile, f"VAE encode output tile ({i}, {j})")
                 tile = self.quant_conv(tile)
+                inspect_tensor(tile, f"VAE encode moments tile ({i}, {j})")
                 row.append(tile)
             rows.append(row)
+        inspect_list(rows, "VAE encode moments tiles", stop=True)
         result_rows = []
         for i, row in enumerate(rows):
             result_row = []
@@ -535,14 +540,18 @@ time_compression_ratio: {self.time_compression_ratio},
                     tile = self.blend_v(rows[i - 1][j], tile, blend_extent)
                 if j > 0:
                     tile = self.blend_h(row[j - 1], tile, blend_extent)
+                inspect_tensor(tile, f"VAE encode blended moments tile ({i}, {j})")
                 result_row.append(tile[:, :, :, :row_limit, :row_limit])
             result_rows.append(torch.cat(result_row, dim=-1))
+        inspect_list(result_rows, "VAE encode blended moments rows", stop=True)
 
         moments = torch.cat(result_rows, dim=-2)
         if return_moments:
             return moments
 
+        inspect_tensor(moments, "VAE encode output moments")
         posterior = DiagonalGaussianDistribution(moments)
+        inspect_tensor(posterior.mean, "VAE encode output mean")
         if not return_dict:
             return (posterior,)
 
