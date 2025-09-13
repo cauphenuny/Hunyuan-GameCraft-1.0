@@ -529,7 +529,7 @@ time_compression_ratio: {self.time_compression_ratio},
                 inspect_tensor(tile, f"VAE encode moments tile ({i}, {j})")
                 row.append(tile)
             rows.append(row)
-        inspect_list(rows, "VAE encode moments tiles", stop=True)
+        # inspect_list(rows, "VAE encode moments tiles", stop=True)
         result_rows = []
         for i, row in enumerate(rows):
             result_row = []
@@ -543,7 +543,7 @@ time_compression_ratio: {self.time_compression_ratio},
                 inspect_tensor(tile, f"VAE encode blended moments tile ({i}, {j})")
                 result_row.append(tile[:, :, :, :row_limit, :row_limit])
             result_rows.append(torch.cat(result_row, dim=-1))
-        inspect_list(result_rows, "VAE encode blended moments rows", stop=True)
+        # inspect_list(result_rows, "VAE encode blended moments rows", stop=True)
 
         moments = torch.cat(result_rows, dim=-2)
         if return_moments:
