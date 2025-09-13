@@ -24,6 +24,8 @@ from hymm_sp.modules.parallel_states import (
     nccl_info,
 )
 
+from hymm_sp.modules.debug_utils import inspect_tensor, inspect_nparray
+
 class CropResize:
     """
     Custom transform to resize and crop images to a target size while preserving aspect ratio.
@@ -154,6 +156,8 @@ def main():
         # Apply transformations and prepare tensor for model input
         ref_images_pixel_values = [ref_image_transform(ref_image) for ref_image in raw_ref_images]
         ref_images_pixel_values = torch.cat(ref_images_pixel_values).unsqueeze(0).unsqueeze(2).to(device)
+
+        inspect_tensor(ref_images_pixel_values, "ref_images_pixel_values")
         
         # Encode reference images to latent space using VAE
         with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=True):
@@ -237,6 +241,12 @@ def main():
                 hunyuan_video_sampler.vae.quant_conv.to('cpu')
                 hunyuan_video_sampler.vae.encoder.to('cpu')
     
+    # for i, image in enumerate(raw_ref_images):
+    #     inspect_nparray(image, f"raw_ref_images[{i}]")
+    
+    inspect_tensor(raw_last_latents, "raw_last_latents")
+    inspect_tensor(raw_ref_latents, "raw_ref_latents", stop=True)
+
     # Store references for generation loop
     ref_images = raw_ref_images
     last_latents = raw_last_latents
