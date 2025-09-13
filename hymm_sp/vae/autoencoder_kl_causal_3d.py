@@ -524,7 +524,7 @@ time_compression_ratio: {self.time_compression_ratio},
                 tile = x[:, :, :, i : i + self.tile_sample_min_size, j : j + self.tile_sample_min_size]
                 inspect_tensor(tile, f"VAE encode input tile ({i}, {j})")
                 tile = self.encoder(tile)
-                inspect_tensor(tile, f"VAE encode output tile ({i}, {j})")
+                inspect_tensor(tile, f"VAE encode output tile ({i}, {j})", stop=True)
                 tile = self.quant_conv(tile)
                 inspect_tensor(tile, f"VAE encode moments tile ({i}, {j})")
                 row.append(tile)

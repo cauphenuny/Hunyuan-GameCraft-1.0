@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import inspect
 from typing import Optional, Tuple
 
 import numpy as np
@@ -8,6 +9,8 @@ import torch.nn as nn
 from diffusers.utils import BaseOutput, is_torch_version
 from diffusers.utils.torch_utils import randn_tensor
 from diffusers.models.attention_processor import SpatialNorm
+
+from hymm_sp.modules.debug_utils import inspect_tensor
 from .unet_causal_3d_blocks import (
     CausalConv3d,
     UNetMidBlockCausal3D,
@@ -144,7 +147,12 @@ class EncoderCausal3D(nn.Module):
         r"""The forward method of the `EncoderCausal3D` class."""
         assert len(sample.shape) == 5, "The input tensor should have 5 dimensions"
 
+        for param in self.parameters():
+            inspect_tensor(param, "VAE Encoder param")
+
+        inspect_tensor(sample, "VAE Encoder input")
         sample = self.conv_in(sample)
+        inspect_tensor(sample, "VAE Encoder sample after conv_in")
 
         if self.training and self.gradient_checkpointing:
 
@@ -172,16 +180,19 @@ class EncoderCausal3D(nn.Module):
 
         else:
             # down
-            for down_block in self.down_blocks:
+            for i, down_block in enumerate(self.down_blocks):
                 sample = down_block(sample)
+                inspect_tensor(sample, f"VAE Encoder sample after down_block {i}")
 
             # middle
             sample = self.mid_block(sample)
+            inspect_tensor(sample, "VAE Encoder sample after mid_block")
 
         # post-process
         sample = self.conv_norm_out(sample)
         sample = self.conv_act(sample)
         sample = self.conv_out(sample)
+        inspect_tensor(sample, "VAE Encoder output sample")
 
         return sample
 
