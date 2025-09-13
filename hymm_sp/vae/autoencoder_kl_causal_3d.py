@@ -7,6 +7,8 @@ import loguru
 import torch
 import torch.nn as nn
 import torch.distributed
+from loguru import logger
+from hymm_sp.modules.debug_utils import inspect_tensor
 
 from torch import distributed as dist
 
@@ -349,12 +351,29 @@ class AutoencoderKLCausal3D(ModelMixin, ConfigMixin, FromOriginalVAEMixin):
         """
         assert len(x.shape) == 5, "The input tensor should have 5 dimensions"
 
+        state = f"""
+   use_temporal_tiling: {self.use_temporal_tiling},
+ tile_sample_min_tsize: {self.tile_sample_min_tsize},
+    use_spatial_tiling: {self.use_spatial_tiling},
+  tile_sample_min_size: {self.tile_sample_min_size},
+           use_slicing: {self.use_slicing},
+   disable_causal_conv: {self.disable_causal_conv},
+time_compression_ratio: {self.time_compression_ratio},
+"""
+        logger.info(f"Encoding image with shape {x.shape}, state: {state}")
+
+        inspect_tensor(x, "VAE encode input")
+
         if self.use_temporal_tiling and x.shape[2] > self.tile_sample_min_tsize:
-            return self.temporal_tiled_encode(x, return_dict=return_dict)
+            result = self.temporal_tiled_encode(x, return_dict=return_dict)
+            inspect_tensor(result.latent_dist.mean, "VAE encode output mean")
+            return result
         
         if self.use_spatial_tiling and \
             (x.shape[-1] > self.tile_sample_min_size or x.shape[-2] > self.tile_sample_min_size):
-            return self.spatial_tiled_encode(x, return_dict=return_dict)
+            result = self.spatial_tiled_encode(x, return_dict=return_dict)
+            inspect_tensor(result.latent_dist.mean, "VAE encode output mean")
+            return result
                             
         if self.use_slicing and x.shape[0] > 1:
             encoded_slices = [self.encoder(x_slice) for x_slice in x.split(1)]
