@@ -72,8 +72,16 @@ def inspect_tensor(tensor, name="tensor"):
 
 def flash_attn_varlen_func(*args, **kwargs):
     if flash_attn_varlen_func_gpu:
+        q, k, v = args[:3]
+        inspect_tensor(q, "flash_attn_varlen_func_gpu q")
+        inspect_tensor(k, "flash_attn_varlen_func_gpu k")
+        inspect_tensor(v, "flash_attn_varlen_func_gpu v")
         result =  flash_attn_varlen_func_gpu(*args, **kwargs)
         inspect_tensor(result, "flash_attn_varlen_func_gpu result")
     else:
+        q, k, v = args[:3]
+        inspect_tensor(q, "flash_attn_varlen_func_npu q")
+        inspect_tensor(k, "flash_attn_varlen_func_npu k")
+        inspect_tensor(v, "flash_attn_varlen_func_npu v")
         result = flash_attn_varlen_func_npu(*args, **kwargs)
         inspect_tensor(result, "flash_attn_varlen_func_npu result")
