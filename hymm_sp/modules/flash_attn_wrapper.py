@@ -3,7 +3,7 @@ from loguru import logger
 from jaxtyping import Float, Int
 import torch
 import torch.nn.functional as F
-from debug_utils import inspect_tensor
+from .debug_utils import inspect_tensor
 try:
     from flash_attn.flash_attn_interface import flash_attn_varlen_func as flash_attn_varlen_func_gpu
 except ImportError:

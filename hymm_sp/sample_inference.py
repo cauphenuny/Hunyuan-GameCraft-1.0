@@ -15,7 +15,7 @@ from hymm_sp.inference import Inference
 from hymm_sp.diffusion.schedulers import FlowMatchDiscreteScheduler
 from packaging import version as pver
 
-from modules.debug_utils import inspect_tensor
+from .modules.debug_utils import inspect_tensor
 
 ACTION_DICT = {"w": "forward", "a": "left", "d": "right", "s": "backward", "left_rot":"left_rot", "right_rot":"right_rot", "up_rot":"up_rot", "down_rot":"down_rot",}
             
