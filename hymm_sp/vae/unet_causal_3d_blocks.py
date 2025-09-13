@@ -13,6 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, Optional, Tuple, Union
 
+from hymm_sp.modules.debug_utils import inspect_tensor
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -67,8 +68,12 @@ class CausalConv3d(nn.Module):
         self.conv = nn.Conv3d(chan_in, chan_out, kernel_size, stride = stride, dilation = dilation, **kwargs)
 
     def forward(self, x):
+        inspect_tensor(x, "CausalConv3d input")
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
-        return self.conv(x)
+        inspect_tensor(x, "CausalConv3d after pad")
+        x = self.conv(x)
+        inspect_tensor(x, "CausalConv3d output", stop=True)
+        return x
     
 class CausalAvgPool3d(nn.Module):
     def __init__(
