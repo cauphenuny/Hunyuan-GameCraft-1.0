@@ -273,6 +273,15 @@ def main():
             return_latents=True,
             use_sage=args.use_sage,
         )
+        assert outputs is not None, "Model prediction returned None"
+        logger.debug(f"Output keys: {outputs.keys()}")
+        for k, v in outputs.items():
+            if isinstance(v, torch.Tensor):
+                logger.debug(f"{k}: {v.shape}, dtype: {v.dtype}, device: {v.device}, avg: {v.float().mean():.6f}")
+            elif isinstance(v, list):
+                logger.debug(f"{k}: List of length {len(v)}")
+            else:
+                logger.debug(f"{k}: {type(v)}")
         
         # Update latents for next iteration (maintain temporal consistency)
         ref_latents = outputs["ref_latents"]
