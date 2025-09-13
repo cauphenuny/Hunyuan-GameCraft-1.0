@@ -3,6 +3,7 @@ from loguru import logger
 from jaxtyping import Float, Int
 import torch
 import torch.nn.functional as F
+from debug_utils import inspect_tensor
 try:
     from flash_attn.flash_attn_interface import flash_attn_varlen_func as flash_attn_varlen_func_gpu
 except ImportError:
@@ -63,13 +64,6 @@ except ImportError:
                 sparse_mode=3
             )[0]
 
-def inspect_tensor(tensor, name="tensor"):
-    if tensor is None:
-        logger.info(f"{name} is None")
-    else:
-        logger.info(f"{name}: shape={tensor.shape}, dtype={tensor.dtype}, device={tensor.device}, mean={tensor.float().mean():.6f}, std={tensor.float().std():.6f}, min={tensor.min().item():.6f}, max={tensor.max().item():.6f}")
-    input("Press Enter to continue...")
-
 def flash_attn_varlen_func(*args, **kwargs):
     if flash_attn_varlen_func_gpu:
         q, k, v = args[:3]
@@ -77,11 +71,11 @@ def flash_attn_varlen_func(*args, **kwargs):
         inspect_tensor(k, "flash_attn_varlen_func_gpu k")
         inspect_tensor(v, "flash_attn_varlen_func_gpu v")
         result =  flash_attn_varlen_func_gpu(*args, **kwargs)
-        inspect_tensor(result, "flash_attn_varlen_func_gpu result")
+        inspect_tensor(result, "flash_attn_varlen_func_gpu result", stop=True)
     else:
         q, k, v = args[:3]
         inspect_tensor(q, "flash_attn_varlen_func_npu q")
         inspect_tensor(k, "flash_attn_varlen_func_npu k")
         inspect_tensor(v, "flash_attn_varlen_func_npu v")
         result = flash_attn_varlen_func_npu(*args, **kwargs)
-        inspect_tensor(result, "flash_attn_varlen_func_npu result")
+        inspect_tensor(result, "flash_attn_varlen_func_npu result", stop=True)

@@ -15,6 +15,8 @@ from hymm_sp.inference import Inference
 from hymm_sp.diffusion.schedulers import FlowMatchDiscreteScheduler
 from packaging import version as pver
 
+from modules.debug_utils import inspect_tensor
+
 ACTION_DICT = {"w": "forward", "a": "left", "d": "right", "s": "backward", "left_rot":"left_rot", "right_rot":"right_rot", "up_rot":"up_rot", "down_rot":"down_rot",}
             
 def custom_meshgrid(*args):
@@ -641,6 +643,15 @@ class HunyuanVideoSampler(Inference):
             self.logger.info(debug_str)
 
         start_time = time.time()
+        inspect_tensor(last_latents, "last_latents")
+        inspect_tensor(ref_latents, "ref_latents")
+        inspect_tensor(init_latents, "init_latents")
+        inspect_tensor(mask, "mask")
+        inspect_tensor(prompt_embeds, "prompt_embeds")
+        inspect_tensor(attention_mask, "attention_mask")
+        inspect_tensor(negative_prompt_embeds, "negative_prompt_embeds")
+        inspect_tensor(negative_attention_mask, "negative_attention_mask")
+        inspect_tensor(uncond_ref_latents, "uncond_ref_latents")
         samples = self.pipeline(prompt=prompt,   
                                 last_latents=last_latents,
                                 cam_latents=pose_embeds,
