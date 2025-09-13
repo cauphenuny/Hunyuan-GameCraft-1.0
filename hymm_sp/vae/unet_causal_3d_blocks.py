@@ -43,6 +43,7 @@ def prepare_causal_attention_mask(n_frame: int, n_hw: int, dtype, device, batch_
 
 
 class CausalConv3d(nn.Module):
+    count = 0
     def __init__(
         self,
         chan_in,
@@ -66,13 +67,16 @@ class CausalConv3d(nn.Module):
         self.time_causal_padding = padding
 
         self.conv = nn.Conv3d(chan_in, chan_out, kernel_size, stride = stride, dilation = dilation, **kwargs)
+        self.id = CausalConv3d.count
+        CausalConv3d.count += 1
 
     def forward(self, x):
-        inspect_tensor(x, "CausalConv3d input")
+        inspect_tensor(x, f"CausalConv3d_{self.id} input")
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
-        inspect_tensor(x, "CausalConv3d after pad")
+        inspect_tensor(x, f"CausalConv3d_{self.id} after pad")
         x = self.conv(x)
-        inspect_tensor(x, "CausalConv3d output", stop=True)
+        inspect_tensor(x, f"CausalConv3d_{self.id} output")
+        self.__class__.count += 1
         return x
     
 class CausalAvgPool3d(nn.Module):

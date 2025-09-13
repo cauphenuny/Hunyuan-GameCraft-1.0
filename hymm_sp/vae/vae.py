@@ -147,8 +147,8 @@ class EncoderCausal3D(nn.Module):
         r"""The forward method of the `EncoderCausal3D` class."""
         assert len(sample.shape) == 5, "The input tensor should have 5 dimensions"
 
-        for name, param in self.state_dict().items():
-            inspect_tensor(param, f"{name}")
+        # for name, param in self.state_dict().items():
+        #     inspect_tensor(param, f"{name}")
 
         inspect_tensor(sample, "input sample")
         sample = self.conv_in(sample)

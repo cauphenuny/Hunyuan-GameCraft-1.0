@@ -2,3 +2,4 @@
 kernel_meta/
 weights/
 results*/
+tensor_dict.pt
