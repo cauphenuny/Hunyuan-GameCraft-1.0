@@ -1,21 +1,21 @@
 #!/bin/bash
 JOBS_DIR=$(dirname $(dirname "$0"))
 export PYTHONPATH=${JOBS_DIR}:$PYTHONPATH
-export MODEL_BASE="/path/to/models"
-checkpoint_path="/path/to/ckpts"
+export MODEL_BASE="weights/stdmodels"
+checkpoint_path="weights/gamecraft_models/mp_rank_00_model_states.pt"
 
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 modelname='Tencent_hunyuanGameCraft_720P'
 
-# disable sp and enable cpu offload
-export DISABLE_SP=1
-export CPU_OFFLOAD=1
-export NUM_GPU=1
-
-# # enable both sp and cpu offload
-# export DISABLE_SP=0
+# # disable sp and enable cpu offload
+# export DISABLE_SP=1
 # export CPU_OFFLOAD=1
-# export NUM_GPU=8
+# export NUM_GPU=1
+
+# enable both sp and cpu offload
+export DISABLE_SP=0
+export CPU_OFFLOAD=0
+export NUM_GPU=1
 
 torchrun --nnodes=1 --nproc_per_node=${NUM_GPU} --master_port 29605 hymm_sp/sample_batch.py \
     --image-path "asset/village.png" \
@@ -31,5 +31,5 @@ torchrun --nnodes=1 --nproc_per_node=${NUM_GPU} --master_port 29605 hymm_sp/samp
     --infer-steps 50 \
     --flow-shift-eval-video 5.0 \
     --cpu-offload \
-    --use-fp8 \
     --save-path './results/'
+    #--use-fp8

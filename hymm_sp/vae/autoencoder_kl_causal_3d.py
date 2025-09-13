@@ -528,6 +528,7 @@ time_compression_ratio: {self.time_compression_ratio},
                 tile = self.quant_conv(tile)
                 inspect_tensor(tile, f"VAE encode moments tile ({i}, {j})")
                 row.append(tile)
+            inspect_list(row, f"VAE encode moments row {i // overlap_size}", stop=True)
             rows.append(row)
         # inspect_list(rows, "VAE encode moments tiles", stop=True)
         result_rows = []
@@ -542,6 +543,7 @@ time_compression_ratio: {self.time_compression_ratio},
                     tile = self.blend_h(row[j - 1], tile, blend_extent)
                 inspect_tensor(tile, f"VAE encode blended moments tile ({i}, {j})")
                 result_row.append(tile[:, :, :, :row_limit, :row_limit])
+            inspect_list(result_row, f"VAE encode blended moments row {i}", stop=True)
             result_rows.append(torch.cat(result_row, dim=-1))
         # inspect_list(result_rows, "VAE encode blended moments rows", stop=True)
 
