@@ -71,6 +71,7 @@ class CausalConv3d(nn.Module):
         self.conv = nn.Conv3d(chan_in, chan_out, kernel_size, stride = stride, dilation = dilation, **kwargs)
         self.id = CausalConv3d.count
         CausalConv3d.count += 1
+        loguru.logger.info(f"CausalConv3d_{self.id} time_causal_padding: {self.time_causal_padding}, mode: {self.pad_mode}, chan_in: {chan_in}, chan_out: {chan_out}, kernel_size: {kernel_size}, stride: {stride}, dilation: {dilation}, kwargs: {kwargs}")
 
     def forward(self, x):
         # if self.id > 0:
@@ -78,6 +79,7 @@ class CausalConv3d(nn.Module):
         inspect_tensor(x, f"CausalConv3d_{self.id} input")
         loguru.logger.info(f"CausalConv3d_{self.id} time_causal_padding: {self.time_causal_padding}, mode: {self.pad_mode}")
         loguru.logger.info(f"before pad: {x[0, 0, :3, :3, :3].flatten()}")
+        inspect_tensor(torch.tensor(self.time_causal_padding), f"CausalConv3d_{self.id} time_causal_padding")
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
         loguru.logger.info(f"after pad: {x[0, 0, :3, :3, :3].flatten()}")
         inspect_tensor(x, f"CausalConv3d_{self.id} after pad")

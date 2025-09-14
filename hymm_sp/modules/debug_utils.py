@@ -5,7 +5,7 @@ import numpy as np
 tensor_dict = {}
 
 def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
-    tensor_dict[name] = tensor
+    tensor_dict[name] = tensor.to("cpu") if tensor is not None else None
     if tensor is None:
         logger.opt(depth=depth).info(f"{name} is None")
     else:
@@ -45,9 +45,20 @@ def check_same(dict1, dict2):
                 logger.warning(f"Shape mismatch for {name}: {tensor.shape} vs {tensor2.shape}")
             else:
                 if not torch.allclose(tensor, tensor2, atol=1e-5, rtol=1e-3):
-                    diff = (tensor - tensor2).abs()
-                    logger.warning(f"Value mismatch for {name}: max diff={diff.max().item():.8f}, mean diff={diff.mean().item():.8f}")
+                    diff: torch.Tensor = (tensor - tensor2).abs()
+                    flat_diff = diff.reshape(-1)
+                    max_diff, flat_idx = torch.max(flat_diff, dim=0)
+                    max_idx = torch.unravel_index(flat_idx, tensor.shape)
+                    idx_str = ', '.join([str(i.item()) for i in max_idx])
+                    val1 = tensor[max_idx].item()
+                    val2 = tensor2[max_idx].item()
+                    logger.warning(
+                        f"Value mismatch for {name}: max diff={max_diff.item():.8f}, mean diff={diff.mean().item():.8f}, "
+                        f"max diff index=({idx_str}), value1={val1:.8f}, value2={val2:.8f}"
+                    )
                 else:
                     logger.info(f"{name} matches")
         else:
             logger.warning(f"{name} not found in second dict")
+
+# check_same(dict1, dict2)
