@@ -30,6 +30,8 @@ from diffusers.models.normalization import RMSNorm
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
+import loguru
+
 
 def prepare_causal_attention_mask(n_frame: int, n_hw: int, dtype, device, batch_size: int = None):
     seq_len = n_frame * n_hw
@@ -71,12 +73,16 @@ class CausalConv3d(nn.Module):
         CausalConv3d.count += 1
 
     def forward(self, x):
+        # if self.id > 0:
+        #     breakpoint()
         inspect_tensor(x, f"CausalConv3d_{self.id} input")
+        loguru.logger.info(f"CausalConv3d_{self.id} time_causal_padding: {self.time_causal_padding}, mode: {self.pad_mode}")
+        loguru.logger.info(f"before pad: {x[0, 0, :3, :3, :3].flatten()}")
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
+        loguru.logger.info(f"after pad: {x[0, 0, :3, :3, :3].flatten()}")
         inspect_tensor(x, f"CausalConv3d_{self.id} after pad")
         x = self.conv(x)
         inspect_tensor(x, f"CausalConv3d_{self.id} output")
-        self.__class__.count += 1
         return x
     
 class CausalAvgPool3d(nn.Module):
