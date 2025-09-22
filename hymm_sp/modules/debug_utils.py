@@ -5,7 +5,10 @@ import numpy as np
 tensor_dict = {}
 
 def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
-    tensor_dict[name] = tensor.to("cpu") if tensor is not None else None
+    if name in tensor_dict:
+        logger.error(f"Tensor name '{name}' already exists in tensor_dict. Please use a unique name.")
+        exit(1)
+    tensor_dict[name] = tensor.clone().to("cpu") if tensor is not None else None
     if tensor is None:
         logger.opt(depth=depth).info(f"{name} is None")
     else:
@@ -37,6 +40,19 @@ def inspect_list(lst, name="list", stop=False, depth=1):
     if stop:
         input("Press Enter to continue...")
 
+def diff_tensors(tensor1, tensor2, name: str | None = None):
+    diff: torch.Tensor = (tensor1 - tensor2).abs()
+    flat_diff = diff.reshape(-1)
+    max_diff, flat_idx = torch.max(flat_diff, dim=0)
+    max_idx = torch.unravel_index(flat_idx, tensor1.shape)
+    idx_str = ', '.join([str(i.item()) for i in max_idx])
+    val1 = tensor1[max_idx].item()
+    val2 = tensor2[max_idx].item()
+    logger.warning(
+        f"Value mismatch{f' for {name}' if name else ''}: max diff={max_diff.item():.8f}, mean diff={diff.mean().item():.8f}, "
+        f"max diff index=({idx_str}), value1={val1:.8f}, value2={val2:.8f}"
+    )
+
 def check_same(dict1, dict2):
     for name, tensor in dict1.items():
         if name in dict2:
@@ -45,20 +61,13 @@ def check_same(dict1, dict2):
                 logger.warning(f"Shape mismatch for {name}: {tensor.shape} vs {tensor2.shape}")
             else:
                 if not torch.allclose(tensor, tensor2, atol=1e-5, rtol=1e-3):
-                    diff: torch.Tensor = (tensor - tensor2).abs()
-                    flat_diff = diff.reshape(-1)
-                    max_diff, flat_idx = torch.max(flat_diff, dim=0)
-                    max_idx = torch.unravel_index(flat_idx, tensor.shape)
-                    idx_str = ', '.join([str(i.item()) for i in max_idx])
-                    val1 = tensor[max_idx].item()
-                    val2 = tensor2[max_idx].item()
-                    logger.warning(
-                        f"Value mismatch for {name}: max diff={max_diff.item():.8f}, mean diff={diff.mean().item():.8f}, "
-                        f"max diff index=({idx_str}), value1={val1:.8f}, value2={val2:.8f}"
-                    )
+                    diff_tensors(tensor, tensor2, name=name)
                 else:
                     logger.info(f"{name} matches")
         else:
             logger.warning(f"{name} not found in second dict")
 
 # check_same(dict1, dict2)
+
+def test_pad(x):
+    return torch.nn.functional.pad(x, (1, 1, 1, 1, 2, 0), mode='replicate')

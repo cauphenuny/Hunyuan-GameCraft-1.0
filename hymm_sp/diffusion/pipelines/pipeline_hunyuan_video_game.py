@@ -46,6 +46,7 @@ from hymm_sp.vae.autoencoder_kl_causal_3d import AutoencoderKLCausal3D
 from hymm_sp.text_encoder import TextEncoder
 from einops import rearrange
 from ...modules import HYVideoDiffusionTransformer
+from hymm_sp.modules.debug_utils import inspect_tensor, inspect_nparray
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -572,6 +573,8 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
         emb = w.to(dtype)[:, None] * emb[None, :]
         emb = torch.cat([torch.sin(emb), torch.cos(emb)], dim=1)
         if embedding_dim % 2 == 1:  # zero pad
+            emb = emb.cpu()
+            emb = emb.cuda()
             emb = torch.nn.functional.pad(emb, (0, 1))
         assert emb.shape == (w.shape[0], embedding_dim)
         return emb
@@ -974,6 +977,10 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                 
                 cam_latents_ = torch.cat([uncond_cam_latents, cam_latents], dim=0) \
                     if self.do_classifier_free_guidance else cam_latents
+
+                inspect_tensor(t_expand, f"t_expand {i}")
+                inspect_tensor(latent_model_input, f"latent_model_input {i}")
+                inspect_tensor(cam_latents, f"cam_latents {i}")
                 
                 # predict the noise residual
                 with torch.autocast(device_type="cuda", dtype=target_dtype, enabled=autocast_enabled):
@@ -1048,6 +1055,8 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                     noise_pred = rescale_noise_cfg(noise_pred, 
                                                    noise_pred_text, 
                                                    guidance_rescale=self.guidance_rescale)
+
+                inspect_tensor(noise_pred, f"noise_pred {i}", stop=False)
 
                 # compute the previous noisy sample x_t -> x_t-1
                 # latents = self.scheduler.step(noise_pred, t, latents, **extra_step_kwargs, return_dict=False)[0]
@@ -1132,6 +1141,7 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                 image = image.squeeze(2)
 
         if image is not None:
+            inspect_tensor(image, "decoded image", stop=True)
             image = (image / 2 + 0.5).clamp(0, 1)
             # we always cast to float32 as this does not cause significant overhead and is compatible with bfloa16
             image = image.cpu().float()

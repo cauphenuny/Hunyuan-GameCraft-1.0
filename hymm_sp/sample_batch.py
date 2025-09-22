@@ -11,6 +11,7 @@ import cv2
 try:
     from torch_npu.contrib import transfer_to_npu
 except ImportError:
+    logger.warning("torch_npu is not installed.")
     pass
 
 from torch.utils.data.distributed import DistributedSampler
@@ -245,7 +246,7 @@ def main():
     #     inspect_nparray(image, f"raw_ref_images[{i}]")
     
     inspect_tensor(raw_last_latents, "raw_last_latents")
-    inspect_tensor(raw_ref_latents, "raw_ref_latents", stop=True)
+    inspect_tensor(raw_ref_latents, "raw_ref_latents", stop=False)
 
     # Store references for generation loop
     ref_images = raw_ref_images
