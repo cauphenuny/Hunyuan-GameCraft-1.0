@@ -8,6 +8,10 @@ checkpoint_path="weights/gamecraft_models/mp_rank_00_model_states_distill.pt"
 current_time=$(date "+%Y.%m.%d-%H.%M.%S")
 modelname='Tencent_hunyuanGameCraft_720P'
 
+export DISABLE_SP=1
+export CPU_OFFLOAD=1
+export NUM_GPU=1
+
 torchrun --nnodes=1 --nproc_per_node=1 --master_port 29605 hymm_sp/sample_batch.py \
     --image-path "asset/village.png" \
     --prompt "A charming medieval village with cobblestone streets, thatched-roof houses, and vibrant flower gardens under a bright blue sky." \
