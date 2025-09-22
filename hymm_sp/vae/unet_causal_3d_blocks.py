@@ -77,13 +77,18 @@ class CausalConv3d(nn.Module):
     def forward(self, x):
         # if self.id > 0:
         #     breakpoint()
-        inspect_tensor(x, f"CausalConv3d_{self.id} input")
-        loguru.logger.info(f"CausalConv3d_{self.id} time_causal_padding: {self.time_causal_padding}, mode: {self.pad_mode}")
-        loguru.logger.info(f"before pad: {x[0, 0, :3, :3, :3].flatten()}")
-        inspect_tensor(torch.tensor(self.time_causal_padding), f"CausalConv3d_{self.id} time_causal_padding")
-        x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
-        loguru.logger.info(f"after pad: {x[0, 0, :3, :3, :3].flatten()}")
-        inspect_tensor(x, f"CausalConv3d_{self.id} after pad")
+        # inspect_tensor(x, f"CausalConv3d_{self.id} input")
+        # loguru.logger.info(f"CausalConv3d_{self.id} time_causal_padding: {self.time_causal_padding}, mode: {self.pad_mode}")
+        # loguru.logger.info(f"before pad: {x[0, 0, :3, :3, :3].flatten()}")
+        # inspect_tensor(torch.tensor(self.time_causal_padding), f"CausalConv3d_{self.id} time_causal_padding")
+        x = x.cpu()
+        x = x.cuda()
+        pad_x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
+        # loguru.logger.info(f"after pad: {pad_x[0, 0, :3, :3, :3].flatten()}")
+        # if self.id == 1:
+            # breakpoint()
+        x = pad_x
+        # inspect_tensor(x, f"CausalConv3d_{self.id} after pad")
         x = self.conv(x)
         # inspect_tensor(x, f"CausalConv3d_{self.id} output")
         return x
@@ -110,6 +115,8 @@ class CausalAvgPool3d(nn.Module):
         self.pad_mode = pad_mode
 
     def forward(self, x):
+        x = x.cpu()
+        x = x.cuda()
         x = F.pad(x, self.time_causal_padding, mode=self.pad_mode)
         return self.conv(x)
 
