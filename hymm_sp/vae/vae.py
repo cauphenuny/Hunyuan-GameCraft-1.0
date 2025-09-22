@@ -150,9 +150,9 @@ class EncoderCausal3D(nn.Module):
         # for name, param in self.state_dict().items():
         #     inspect_tensor(param, f"{name}")
 
-        inspect_tensor(sample, "input sample")
+        # inspect_tensor(sample, "input sample")
         sample = self.conv_in(sample)
-        inspect_tensor(sample, "sample after conv_in")
+        # inspect_tensor(sample, "sample after conv_in")
 
         if self.training and self.gradient_checkpointing:
 
@@ -182,17 +182,17 @@ class EncoderCausal3D(nn.Module):
             # down
             for i, down_block in enumerate(self.down_blocks):
                 sample = down_block(sample)
-                inspect_tensor(sample, f"sample after down_block {i}")
+                # inspect_tensor(sample, f"sample after down_block {i}")
 
             # middle
             sample = self.mid_block(sample)
-            inspect_tensor(sample, "sample after mid_block")
+            # inspect_tensor(sample, "sample after mid_block")
 
         # post-process
         sample = self.conv_norm_out(sample)
         sample = self.conv_act(sample)
         sample = self.conv_out(sample)
-        inspect_tensor(sample, "VAE Encoder output")
+        # inspect_tensor(sample, "VAE Encoder output")
 
         return sample
 

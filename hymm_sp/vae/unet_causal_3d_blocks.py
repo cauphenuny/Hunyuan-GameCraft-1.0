@@ -13,6 +13,7 @@
 # limitations under the License.
 from typing import Any, Dict, Optional, Tuple, Union
 
+from hymm_sp.modules import debug_utils
 from hymm_sp.modules.debug_utils import inspect_tensor
 import numpy as np
 import torch
@@ -84,7 +85,7 @@ class CausalConv3d(nn.Module):
         loguru.logger.info(f"after pad: {x[0, 0, :3, :3, :3].flatten()}")
         inspect_tensor(x, f"CausalConv3d_{self.id} after pad")
         x = self.conv(x)
-        inspect_tensor(x, f"CausalConv3d_{self.id} output")
+        # inspect_tensor(x, f"CausalConv3d_{self.id} output")
         return x
     
 class CausalAvgPool3d(nn.Module):
