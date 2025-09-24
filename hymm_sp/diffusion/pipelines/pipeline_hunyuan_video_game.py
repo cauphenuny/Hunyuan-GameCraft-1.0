@@ -827,6 +827,11 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                 clip_skip=self.clip_skip,
                 data_type=data_type
             )
+
+        inspect_tensor(prompt_embeds, "raw prompt_embeds")
+        inspect_tensor(negative_prompt_embeds, "raw negative_prompt_embeds")
+        inspect_tensor(prompt_mask, "raw prompt_mask")
+        inspect_tensor(negative_prompt_mask, "raw negative_prompt_mask")
         
         if self.text_encoder_2 is not None:
             prompt_embeds_2, negative_prompt_embeds_2, prompt_mask_2, negative_prompt_mask_2 = \
@@ -876,6 +881,10 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
             prompt_mask = torch.cat([prompt_mask, prompt_mask[1:]], dim=0)
             ref_latents = torch.cat([uncond_ref_latents, uncond_ref_latents, ref_latents[1:]], dim=0)
 
+        inspect_tensor(prompt_embeds, "prompt_embeds")
+        inspect_tensor(prompt_embeds_2, "prompt_embeds_2")
+        inspect_tensor(ref_latents, "ref_latents")
+
         # 4. Prepare timesteps
         extra_set_timesteps_kwargs = self.prepare_extra_func_kwargs(
             self.scheduler.set_timesteps, {"n_tokens": n_tokens}
@@ -883,6 +892,7 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
         timesteps, num_inference_steps = retrieve_timesteps(
             self.scheduler, num_inference_steps, device, timesteps, sigmas, **extra_set_timesteps_kwargs,
         )
+        inspect_tensor(timesteps, "retrieved timesteps")
 
             
         if '884' in vae_ver:
@@ -909,6 +919,8 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
             gt_latents,
             denoise_strength,
         )
+        inspect_tensor(latents, "latents")
+        inspect_tensor(timesteps, "timesteps")
         
         gt_latents = gt_latents.repeat(1, 1, frame_length, 1, 1)
         gt_latents_concat = gt_latents.clone()
@@ -964,8 +976,13 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                     latents[:,:,:latents.shape[2]//2,:,:] = last_latents
                     gt_latents_concat[:,:,:latents.shape[2]//2,:,:] = last_latents
                 
+                inspect_tensor(latents, f"latents {i}")
+                inspect_tensor(gt_latents_concat, f"gt_latents_concat {i}")
+                inspect_tensor(mask_concat, f"mask_concat {i}")
+
                 # expand the latents if we are doing classifier free guidance
                 latents_concat = torch.concat([latents, gt_latents_concat, mask_concat], dim=1)
+
                 latent_model_input = torch.cat([latents_concat] * 2) \
                     if self.do_classifier_free_guidance else latents_concat
 

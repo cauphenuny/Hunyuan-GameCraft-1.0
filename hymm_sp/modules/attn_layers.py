@@ -177,7 +177,8 @@ def _get_unpad_data(attention_mask: torch.Tensor) -> Tuple[torch.Tensor, torch.T
     indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
     max_seqlen_in_batch = seqlens_in_batch.max().item()
     cu_seqlens = torch.cumsum(seqlens_in_batch, dim=0, dtype=torch.int32)
-    cu_seqlens = cu_seqlens.cpu().cuda()
+    cu_seqlens = cu_seqlens.cpu()
+    cu_seqlens = cu_seqlens.cuda()
     cu_seqlens = F.pad(cu_seqlens, pad=(1, 0))
     return (
         indices,

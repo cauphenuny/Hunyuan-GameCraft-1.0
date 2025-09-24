@@ -53,21 +53,25 @@ def diff_tensors(tensor1, tensor2, name: str | None = None):
         f"max diff index=({idx_str}), value1={val1:.8f}, value2={val2:.8f}"
     )
 
-def check_same(dict1, dict2):
+def check_same(dict1, dict2, atol=1e-5, rtol=1e-3):
     for name, tensor in dict1.items():
+        # logger.debug(f"checking {name}...")
         if name in dict2:
             tensor2 = dict2[name]
+            if tensor is None and tensor2 is None:
+                logger.info(f"{name} both None")
+                continue
             if tensor.shape != tensor2.shape:
                 logger.warning(f"Shape mismatch for {name}: {tensor.shape} vs {tensor2.shape}")
             else:
-                if not torch.allclose(tensor, tensor2, atol=1e-5, rtol=1e-3):
+                if not torch.allclose(tensor, tensor2, atol=atol, rtol=rtol):
                     diff_tensors(tensor, tensor2, name=name)
                 else:
                     logger.info(f"{name} matches")
         else:
             logger.warning(f"{name} not found in second dict")
 
-# check_same(dict1, dict2)
+# check_same(dict1, dict2, atol=1e-2, rtol=1e-2)
 
 def test_pad(x):
     return torch.nn.functional.pad(x, (1, 1, 1, 1, 2, 0), mode='replicate')
