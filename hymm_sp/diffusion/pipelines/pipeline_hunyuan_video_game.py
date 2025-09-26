@@ -527,21 +527,29 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
         # print("!!!!!!!!!!!!!! RANDOM NOISE !!!!!!!!!!!!!!!!!!")
         # x0 = randn_tensor(shape, device=device, dtype=dtype)
         x1 = gt_latents
+        inspect_tensor(gt_latents, "prepare_latents.gt_latents")
 
         t = torch.tensor([0.999]).to(device=device)
+        inspect_tensor(latents, "prepare_latents.latents.0")
         latents = x0 * t + x1 * (1 - t)
+        inspect_tensor(latents, "prepare_latents.latents.1")
         latents = torch.randn_like(x1)
+        inspect_tensor(latents, "prepare_latents.latents.2")
         # print("!!!randn_like", latents.shape)
         latents = latents.to(dtype=dtype)
+        inspect_tensor(latents, "prepare_latents.latents.3")
         
         if latents is None:
             latents = noise 
+            inspect_tensor(latents, "prepare_latents.latents.4")
             original_latents = None
         else:
             latents = latents.to(device)
+            inspect_tensor(latents, "prepare_latents.latents.5")
 
         if hasattr(self.scheduler, "init_noise_sigma"):
             latents = latents * self.scheduler.init_noise_sigma
+            inspect_tensor(latents, "prepare_latents.latents.6")
 
         return latents, timesteps
 
@@ -904,6 +912,8 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
 
         # 5. Prepare latent variables
         num_channels_latents = self.transformer.config.in_channels
+        inspect_tensor(latents, "input latents")
+        inspect_tensor(timesteps, "input timesteps")
         latents, timesteps  = self.prepare_latents(
             batch_size * num_videos_per_prompt,
             num_channels_latents,

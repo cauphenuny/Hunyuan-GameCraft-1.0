@@ -59,3 +59,4 @@ zipp==3.23.0
 
 jaxtyping==0.3.2
 pybind11==3.0.1
+flash-attn==2.6.3

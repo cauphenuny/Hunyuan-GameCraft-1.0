@@ -1,10 +1,16 @@
 from loguru import logger
 import torch
 import numpy as np
+import os
 
 tensor_dict = {}
 
+disable_inspect = os.getenv("DISABLE_INSPECT", "0") == "1"
+dump_path = os.getenv("INSPECT_DUMP_PATH", "tensor_dict.pt")
+
 def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
+    if disable_inspect:
+        return
     if name in tensor_dict:
         logger.error(f"Tensor name '{name}' already exists in tensor_dict. Please use a unique name.")
         exit(1)
@@ -14,11 +20,13 @@ def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
     else:
         logger.opt(depth=depth).info(f"{name}: shape={tensor.shape}, dtype={tensor.dtype}, device={tensor.device}, mean={tensor.float().mean():.8f}, std={tensor.float().std():.8f}, min={tensor.min().item():.8f}, max={tensor.max().item():.8f}")
     if stop:
-        with open("tensor_dict.pt", "wb") as f:
+        with open(dump_path, "wb") as f:
             torch.save(tensor_dict, f)
         input("Press Enter to continue...")
 
 def inspect_nparray(array, name="array", stop=False, depth=1):
+    if disable_inspect:
+        return
     if array is None:
         logger.opt(depth=depth).info(f"{name} is None")
     else:
@@ -27,6 +35,8 @@ def inspect_nparray(array, name="array", stop=False, depth=1):
         input("Press Enter to continue...")
 
 def inspect_list(lst, name="list", stop=False, depth=1):
+    if disable_inspect:
+        return
     if lst is None:
         logger.opt(depth=depth).info(f"{name} is None")
     else:
