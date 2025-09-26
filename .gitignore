@@ -3,3 +3,4 @@ kernel_meta/
 weights/
 results*/
 tensor_dict.pt
+fusion_result.json

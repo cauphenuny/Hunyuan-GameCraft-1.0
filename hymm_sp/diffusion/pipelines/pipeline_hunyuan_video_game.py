@@ -930,7 +930,7 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
             denoise_strength,
         )
         inspect_tensor(latents, "latents")
-        inspect_tensor(timesteps, "timesteps")
+        inspect_tensor(timesteps, "timesteps", stop=True)
         
         gt_latents = gt_latents.repeat(1, 1, frame_length, 1, 1)
         gt_latents_concat = gt_latents.clone()
