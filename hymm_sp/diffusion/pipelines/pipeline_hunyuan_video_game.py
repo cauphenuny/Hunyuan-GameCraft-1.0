@@ -522,12 +522,14 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
         if gt_latents.shape[2] == 1:
             gt_latents = gt_latents.repeat(1, 1, frame, 1, 1)
 
+        inspect_tensor(gt_latents, "prepare_latents.gt_latents")
         # TODO: correct
         x0 = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+        inspect_tensor(x0, "prepare_latents.x0")
         # print("!!!!!!!!!!!!!! RANDOM NOISE !!!!!!!!!!!!!!!!!!")
         # x0 = randn_tensor(shape, device=device, dtype=dtype)
         x1 = gt_latents
-        inspect_tensor(gt_latents, "prepare_latents.gt_latents")
+        inspect_tensor(x1, "prepare_latents.x1")
 
         t = torch.tensor([0.999]).to(device=device)
         inspect_tensor(latents, "prepare_latents.latents.0")

@@ -6,7 +6,7 @@ import os
 tensor_dict = {}
 
 disable_inspect = os.getenv("DISABLE_INSPECT", "0") == "1"
-dump_path = os.getenv("INSPECT_DUMP_PATH", "tensor_dict.pt")
+dump_path = os.getenv("DUMP_PATH", "tensor_dict.pt")
 
 def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
     if disable_inspect:
@@ -22,6 +22,7 @@ def inspect_tensor(tensor, name="tensor", stop=False, depth=1):
     if stop:
         with open(dump_path, "wb") as f:
             torch.save(tensor_dict, f)
+            logger.info(f"Dumped tensor_dict to {dump_path}")
         input("Press Enter to continue...")
 
 def inspect_nparray(array, name="array", stop=False, depth=1):
