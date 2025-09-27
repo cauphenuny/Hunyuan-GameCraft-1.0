@@ -516,7 +516,10 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
                 f" size of {batch_size}. Make sure the batch size matches the length of the generators."
             )
-        noise = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+        states = [gen.get_state() for gen in generator]
+        # FIXME: use a better way
+        cpu_generator = [torch.Generator(device="cpu").manual_seed(i + 114514) for i in range(len(states))]
+        noise = randn_tensor(shape, generator=cpu_generator, device="cpu", dtype=dtype).to(device)
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, denoise_strength, device)
 
         if gt_latents.shape[2] == 1:
@@ -524,7 +527,7 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
 
         inspect_tensor(gt_latents, "prepare_latents.gt_latents")
         # TODO: correct
-        x0 = randn_tensor(shape, generator=generator, device=device, dtype=dtype)
+        x0 = randn_tensor(shape, generator=cpu_generator, device="cpu", dtype=dtype).to(device)
         inspect_tensor(x0, "prepare_latents.x0")
         # print("!!!!!!!!!!!!!! RANDOM NOISE !!!!!!!!!!!!!!!!!!")
         # x0 = randn_tensor(shape, device=device, dtype=dtype)
