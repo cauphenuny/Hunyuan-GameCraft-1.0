@@ -46,7 +46,7 @@ from hymm_sp.vae.autoencoder_kl_causal_3d import AutoencoderKLCausal3D
 from hymm_sp.text_encoder import TextEncoder
 from einops import rearrange
 from ...modules import HYVideoDiffusionTransformer
-from hymm_sp.modules.debug_utils import inspect_tensor, inspect_nparray
+from hymm_sp.modules.debug_utils import inspect_tensor, inspect_nparray, deterministic_fill_randn_like
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 
@@ -516,9 +516,11 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
                 f" size of {batch_size}. Make sure the batch size matches the length of the generators."
             )
+
         states = [gen.get_state() for gen in generator]
         # FIXME: use a better way
         cpu_generator = [torch.Generator(device="cpu").manual_seed(i + 114514) for i in range(len(states))]
+
         noise = randn_tensor(shape, generator=cpu_generator, device="cpu", dtype=dtype).to(device)
         timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, denoise_strength, device)
 
@@ -538,7 +540,8 @@ class HunyuanVideoGamePipeline(DiffusionPipeline):
         inspect_tensor(latents, "prepare_latents.latents.0")
         latents = x0 * t + x1 * (1 - t)
         inspect_tensor(latents, "prepare_latents.latents.1")
-        latents = torch.randn_like(x1)
+        # latents = torch.randn_like(x1)
+        latents = deterministic_fill_randn_like(latents, seed=114514)
         inspect_tensor(latents, "prepare_latents.latents.2")
         # print("!!!randn_like", latents.shape)
         latents = latents.to(dtype=dtype)

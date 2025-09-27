@@ -86,3 +86,9 @@ def check_same(dict1, dict2, atol=1e-5, rtol=1e-3):
 
 def test_pad(x):
     return torch.nn.functional.pad(x, (1, 1, 1, 1, 2, 0), mode='replicate')
+
+def deterministic_fill_randn_like(x, seed, mean=0.0, std=1.0):
+    g = torch.Generator(device='cpu').manual_seed(int(seed))
+    tmp = torch.empty_like(x, device='cpu', dtype=torch.float64)
+    tmp.normal_(mean=mean, std=std, generator=g)
+    return tmp.to(dtype=x.dtype, device=x.device)
